@@ -2,7 +2,7 @@
 
 #1.  Two files provided.  Template and Role that can be used to deploy the tempate.  
 #2.  Optional - Create the role in IAM:Roles using the RoleToDeploy.json 
-#3.  Deploy the template via CloudFormation>Stacks>Create stack using options existing template and upload file        TrevorKUselessFargateCWtest.yml
+#3.  Deploy the template via CloudFormation>Stacks>Create stack using options existing template and upload file        *FargateCWtest.yml
 
         #Provide Stack Name - any string 
         #Provide Params - Select Public Subnet and VPC_ID string

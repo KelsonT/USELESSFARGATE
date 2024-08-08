@@ -1,6 +1,6 @@
 ## Description
 
-#1.  Two files provided.  Template and Role that can be used to deploy the tempate. 
+#1.  Two files provided.  Template and Role that can be used to deploy the template. 
 
 #2.  Optional - Create the role in IAM:Roles using the RoleToDeploy.json
 

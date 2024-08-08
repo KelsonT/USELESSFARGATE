@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fargate task to GET a Random Useless Fact and print it to CloudWatch Logs.  
+
+# Only two pramators needed.  When setting the subnet ID you only need one subnet that is public so that the fargate function can reach to the API of the useless fact. 
+Parameters:
+  VpcId:
+    Type: String
+    Description: VPC ID where the Fargate tasks will be deployed
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs where the Fargate tasks will be deployed
+
+# Here you will find role that will be created to allow the fargate task to work. This is not the Role that will be used during the deplyment. 
+Resources:
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "ecs-tasks.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "TaskExecutionPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: 
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "ecs:DescribeTasks"
+                  - "ecs:DescribeTaskDefinition"
+                  - "ecs:DescribeContainerInstances"
+                  - "ecs:DescribeClusters"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DescribeNetworkInterfaces"
+                  - "ec2:DescribeSecurityGroups"
+                  - "ec2:CreateNetworkInterface"
+                  - "ec2:AttachNetworkInterface"
+                  - "ec2:DeleteNetworkInterface"
+                  - "ec2:DetachNetworkInterface"
+                  - "ec2:AssignPrivateIpAddresses"
+                  - "ec2:UnassignPrivateIpAddresses"
+                Resource: "*"
+
+# Log group that you can see in cloudwatch that the useless fact will be logged in. 
+  UselessFactLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/fargate/useless-fact-log-group
+      RetentionInDays: 7
+
+# The custer that the fargate process will be created in.  If the deplyment fails and needs to be redone make sure this is deleted. 
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: UselessFactCluster
+
+# The fargate Task that will GET the random fact from useless facts.  
+  UselessFactTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: UselessFactTaskDefinition
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: useless-fact-container
+          Image: amazonlinux:2
+          EntryPoint: [ "sh", "-c" ]
+          Command: ["yum install -y jq curl && curl -s https://uselessfacts.jsph.pl/api/v2/facts/random | jq -r '.text'"]
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref UselessFactLogGroup
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: useless-fact
+          Essential: true
+
+#The ECS Service that refances the GET and the subnet that will be used for the fargate process. 
+  UselessFactService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups: []
+          Subnets: !Ref SubnetIds
+      TaskDefinition: !Ref UselessFactTaskDefinition

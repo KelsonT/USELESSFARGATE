@@ -1,7 +1,9 @@
 ## Description
 
-#1.  Two files provided.  Template and Role that can be used to deploy the tempate.  
+#1.  Two files provided.  Template and Role that can be used to deploy the tempate. 
+
 #2.  Optional - Create the role in IAM:Roles using the RoleToDeploy.json
+
 #3.  Deploy the template via CloudFormation>Stacks>Create stack using options existing template and upload file        *FargateCWtest.yml
 
         #Provide Stack Name - any string 
